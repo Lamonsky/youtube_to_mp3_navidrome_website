@@ -1,0 +1,27 @@
+﻿version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_app
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./storage/app/public:/media/storage/navidrome/music
+      - ./database/database.sqlite:/var/www/html/database/database.sqlite
+    ports:
+      - "9000:9000"
+    command: php-fpm
+
+  # Opcjonalnie: serwis do migracji lub artisan
+  # artisan:
+  #   image: laravelsail/php83-composer:latest
+  #   working_dir: /var/www/html
+  #   volumes:
+  #     - ./:/var/www/html
+  #   entrypoint: ["php", "artisan"]
+
+volumes:
+  # Możesz zdefiniować wolumeny jeśli chcesz
