@@ -1,0 +1,32 @@
+﻿services:
+  app:
+    build: .
+    container_name: yt_to_mp3_downloader
+    restart: unless-stopped
+    volumes:
+      # Mapujemy TYLKO to, co musi przetrwać restart kontenera i być zmienne:
+      - ./database:/var/www/database # Dla bazy SQLite
+      - ./storage/app/public:/media/storage/navidrome/music # Twoja muzyka
+      - ./storage/logs:/var/www/storage/logs # Żebyś widział logi na hoście
+    networks:
+      - proxy-network
+
+  web:
+    image: nginx:alpine
+    container_name: yt_to_mp3_downloader_nginx
+    restart: unless-stopped
+    ports:
+      - "9005:80"
+    volumes:
+      # Nginx nadal musi widzieć publiczne pliki (CSS/JS),
+      # ale zamiast mapować wszystko, mapujemy tylko folder public:
+      - ./public:/var/www/public
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - proxy-network
+
+networks:
+  proxy-network:
+    driver: bridge
