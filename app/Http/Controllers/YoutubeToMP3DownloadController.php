@@ -69,15 +69,11 @@ class YoutubeToMP3DownloadController extends Controller
                 //Metadata
                 $filePath = storage_path("app/public/". $video->getTitle(). ".mp3");
                 echo($video->getChannel());
-                $artist = $video->getChannel();
-                $song_title = str_replace($artist, '', $video->getTitle());
-                $song_title = str_replace('-', '', $song_title);
-                $song_title = str_replace('()', '', $song_title);
-                $song_title = str_replace('[]', '', $song_title);
-                $song_title = str_replace('  ', ' ', $song_title);                
-                $song_title = trim($song_title);
-                echo($video->getTitle());
-                $this->set_metadata($filePath, $artist, $song_title);
+                $artist = $this->sanitizeFileName($video->getChannel());
+                $song_title = $this->sanitizeFileName(str_replace($artist, '', $video->getTitle() .''));
+                $album = $this->getAlbumInfoFromLastFM($artist, $song_title);
+                echo("Artist: $artist, Song Title: $song_title, Album: $album");
+                $this->set_metadata($filePath, $artist, $song_title, $album);
 
                 $artistDirectory = storage_path('app/public/' . $artist);
                 if(!is_dir($artistDirectory)){
@@ -97,7 +93,7 @@ class YoutubeToMP3DownloadController extends Controller
         return redirect("/");
     }
 
-    private function set_metadata($filePath, $artist, $song_title)
+    private function set_metadata($filePath, $artist, $song_title, $album)
     {
         $getID3 = new \getID3;
         $tagwriter = new \getid3_writetags;
@@ -108,7 +104,7 @@ class YoutubeToMP3DownloadController extends Controller
         $tagData = [
             'artist' => [$artist],
             'title' => [$song_title],
-            'album' => ['yt-dlp'],
+            'album' => [$album],
         ];
         $tagwriter->tag_data = $tagData;
         if ($tagwriter->WriteTags()) {
@@ -116,6 +112,54 @@ class YoutubeToMP3DownloadController extends Controller
         } else {
             echo "Failed to write tags: " . implode(', ', $tagwriter->errors);
         }
+    }
+
+    private function sanitizeFileName(string $fileName): string
+    {
+        // Remove any characters that are not allowed in file names
+        $fileName = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '', $fileName);
+        $fileName = str_replace([' ', '_'], ' ', $fileName); // Replace underscores with spaces
+        $fileName = preg_replace('/\s+/', ' ', $fileName); // Replace multiple spaces with a single space
+        $fileName = str_replace('(OFFICIAL VIDEO)', '', $fileName); // Remove "(OFFICIAL VIDEO)"
+        $fileName = str_replace('(OFFICIAL AUDIO)', '', $fileName); // Remove "(OFFICIAL AUDIO)"
+        $fileName = str_replace('(LYRICS)', '', $fileName); // Remove "(LYRICS)"
+        $fileName = str_replace('(AUDIO)', '', $fileName); // Remove "(AUDIO)"
+        $fileName = str_replace('(OFFICIAL)', '', $fileName); // Remove "(OFFICIAL)"
+        $fileName = str_replace('(HD)', '', $fileName); // Remove "(HD)"
+        $fileName = str_replace('(HQ)', '', $fileName); // Remove "(HQ)"
+        $fileName = str_replace('(EXPLICIT)', '', $fileName); // Remove "(EXPLICIT)"
+        $fileName = str_replace('(EXPLICIT LYRICS)', '', $fileName); // Remove "(EXPLICIT LYRICS)"
+        $fileName = str_replace('(EXPLICIT AUDIO)', '', $fileName); // Remove "(EXPLICIT AUDIO)"
+        $fileName = str_replace('(EXPLICIT OFFICIAL)', '', $fileName); // Remove "(EXPLICIT OFFICIAL)"
+        $fileName = str_replace('(EXPLICIT OFFICIAL VIDEO)', '', $fileName); // Remove "(EXPLICIT OFFICIAL VIDEO)"
+        $fileName = str_replace('(EXPLICIT OFFICIAL AUDIO)', '', $fileName); // Remove "(EXPLICIT OFFICIAL AUDIO)"
+        $fileName = str_replace('(EXPLICIT HD)', '', $fileName); // Remove "(EXPLICIT HD)"
+        $fileName = str_replace('(EXPLICIT HQ)', '', $fileName); // Remove "(EXPLICIT HQ)"
+        $fileName = str_replace('(EXPLICIT LYRICS HD)', '', $fileName); // Remove "(EXPLICIT LYRICS HD)"
+        $fileName = preg_replace('/^[\s\-]+/', '', $fileName); // usuwa spacje i myślniki z początku
+        $fileName = preg_replace('/[\s\-]+$/', '', $fileName); // usuwa spacje i myślniki z końca
+        $fileName = str_replace('Music', '', $fileName); // Remove "Music"
+        $fileName = str_replace('Video', '', $fileName); // Remove "Video"
+        $fileName = str_replace('Audio', '', $fileName); // Remove "Audio"
+        $fileName = str_replace('Lyrics', '', $fileName); // Remove "Lyrics"
+        $fileName = str_replace('HD', '', $fileName); // Remove "HD"
+        $fileName = str_replace('HQ', '', $fileName); // Remove "HQ
+        return $fileName;
+    }
+
+    private function getAlbumInfoFromLastFM(string $artist, string $songTitle): string
+    {
+        $apiKey = config('services.lastfm.api_key');
+
+        $client = new \GuzzleHttp\Client();
+
+        $api_url = 'http://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=' . $apiKey . '&artist=' . urlencode($artist) . '&track=' . urlencode($songTitle) . '&format=json';
+
+        $response = $client->get($api_url);
+
+        $data = json_decode($response->getBody(), true);
+
+        return $data['track']['album']['title'] ?? 'YT-DLP';
     }
 
 }

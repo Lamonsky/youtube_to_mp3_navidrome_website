@@ -43,4 +43,9 @@ return [
         'scan_url' => env('NAVIDROME_SCAN_URL'),
     ],
 
+    'lastfm' => [
+        'api_key' => env('LAST_FM_API_KEY'),
+        'secret_key' => env('LAST_FM_SECRET_KEY'),
+    ],
+
 ];
