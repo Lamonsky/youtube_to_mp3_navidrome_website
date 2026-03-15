@@ -74,7 +74,7 @@ class YoutubeToMP3DownloadController extends Controller
                 $song_title = str_replace('-', '', $song_title);
                 $song_title = str_replace('()', '', $song_title);
                 $song_title = str_replace('[]', '', $song_title);
-                $song_title = str_replace('  ', ' ', $song_title);
+                $song_title = str_replace('  ', ' ', $song_title);                
                 $song_title = trim($song_title);
                 echo($video->getTitle());
                 $this->set_metadata($filePath, $artist, $song_title);
@@ -108,6 +108,7 @@ class YoutubeToMP3DownloadController extends Controller
         $tagData = [
             'artist' => [$artist],
             'title' => [$song_title],
+            'album' => ['yt-dlp'],
         ];
         $tagwriter->tag_data = $tagData;
         if ($tagwriter->WriteTags()) {

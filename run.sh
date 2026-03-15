@@ -5,6 +5,9 @@ echo "🚀 Rozpoczynam wdrażanie aplikacji..."
 # 1. Pobranie najnowszej wersji kodu z repozytorium
 git pull origin main
 
+npm install
+npm run build
+
 # 2. Budowanie i uruchamianie kontenerów (w tle)
 # --build wymusza przebudowanie obrazu, jeśli zmieniłeś np. Dockerfile
 docker compose up -d --build

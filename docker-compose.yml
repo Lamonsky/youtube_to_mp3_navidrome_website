@@ -6,7 +6,8 @@
     volumes:
       # Mapujemy TYLKO to, co musi przetrwać restart kontenera i być zmienne:
       - ./database:/var/www/database # Dla bazy SQLite
-      - ./storage/app/public:/media/storage/navidrome/music # Twoja muzyka
+      - ./public:/var/www/public # Dla publicznych plików (CSS/JS)
+      - /media/storage/navidrome/music:/var/www/storage/app/public # Twoja muzyka
       - ./storage/logs:/var/www/storage/logs # Żebyś widział logi na hoście
     networks:
       - proxy-network
